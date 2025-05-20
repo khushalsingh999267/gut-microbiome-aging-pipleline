@@ -1,0 +1,47 @@
+Building DAG of jobs...
+MissingInputException in rule all in file /media/khushal/Acer/ARG_project/gut-microbiome-prjna931847/Snakefile, line 18:
+Missing input files for rule all:
+    affected files:
+        data/raw/SRR23968609.fastq.gz
+        data/raw/SRR23869719.fastq.gz
+        data/raw/SRR23968627.fastq.gz
+        data/raw/SRR23968628.fastq.gz
+        data/raw/SRR23968742.fastq.gz
+        data/raw/SRR23980397.fastq.gz
+        data/raw/SRR24007850.fastq.gz
+        data/raw/SRR23980400.fastq.gz
+        data/raw/SRR23968613.fastq.gz
+        data/raw/SRR24007848.fastq.gz
+        data/raw/SRR24007846.fastq.gz
+        data/raw/SRR24007842.fastq.gz
+        data/raw/SRR24007854.fastq.gz
+        data/raw/SRR24007844.fastq.gz
+        data/raw/SRR23980396.fastq.gz
+        data/raw/SRR23968654.fastq.gz
+        data/raw/SRR23980403.fastq.gz
+        data/raw/SRR24007845.fastq.gz
+        data/raw/SRR24007849.fastq.gz
+        data/raw/SRR23968641.fastq.gz
+        data/raw/SRR23980398.fastq.gz
+        data/raw/SRR24007843.fastq.gz
+        data/raw/SRR24007840.fastq.gz
+        data/raw/SRR24007853.fastq.gz
+        data/raw/SRR23418710.fastq.gz
+        data/raw/SRR24007855.fastq.gz
+        data/raw/SRR23980401.fastq.gz
+        data/raw/SRR23980402.fastq.gz
+        data/raw/SRR23980399.fastq.gz
+        data/raw/SRR23980428.fastq.gz
+        data/raw/SRR23968626.fastq.gz
+        data/raw/SRR23980395.fastq.gz
+        data/raw/SRR23980302.fastq.gz
+        data/raw/SRR24007851.fastq.gz
+        data/raw/SRR23968612.fastq.gz
+        data/raw/SRR23968625.fastq.gz
+        data/raw/SRR24007856.fastq.gz
+        data/raw/SRR24007852.fastq.gz
+        data/raw/SRR24007841.fastq.gz
+        data/raw/SRR24008057.fastq.gz
+        data/raw/SRR23968624.fastq.gz
+        data/raw/SRR24007847.fastq.gz
+        data/raw/SRR23968614.fastq.gz

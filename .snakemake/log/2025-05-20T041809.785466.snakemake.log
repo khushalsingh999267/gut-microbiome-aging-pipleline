@@ -1,0 +1,2 @@
+SyntaxError in file /media/khushal/Acer/ARG_project/gut-microbiome-prjna931847/Snakefile, line 4:
+Colon expected after keyword configfile. (Snakefile, line 4)

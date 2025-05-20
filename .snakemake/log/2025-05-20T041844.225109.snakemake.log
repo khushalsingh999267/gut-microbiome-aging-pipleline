@@ -1,0 +1,3 @@
+NameError in file /media/khushal/Acer/ARG_project/gut-microbiome-prjna931847/Snakefile, line 5:
+name 'configfile' is not defined
+  File "/media/khushal/Acer/ARG_project/gut-microbiome-prjna931847/Snakefile", line 5, in <module>

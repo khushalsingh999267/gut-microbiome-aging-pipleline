@@ -1,0 +1,64 @@
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 2
+Rules claiming more threads will be scaled down.
+Provided resources: mem_mb=1000
+Job stats:
+job             count
+------------  -------
+all                 1
+fasterq_dump       43
+prefetch           43
+total              87
+
+Select jobs to execute...
+
+[Tue May 20 04:41:58 2025]
+rule prefetch:
+    output: data/raw/SRR24007841.sra
+    jobid: 54
+    reason: Code has changed since last execution
+    wildcards: srr=SRR24007841
+    resources: tmpdir=/tmp, mem_mb=1000, mem_mib=954
+
+[Tue May 20 04:43:46 2025]
+Finished job 54.
+1 of 87 steps (1%) done
+Select jobs to execute...
+
+[Tue May 20 04:43:46 2025]
+rule fasterq_dump:
+    input: data/raw/SRR24007841.sra
+    output: data/raw/SRR24007841_1.fastq.gz, data/raw/SRR24007841_2.fastq.gz
+    jobid: 53
+    reason: Missing output files: data/raw/SRR24007841_1.fastq.gz, data/raw/SRR24007841_2.fastq.gz; Input files updated by another job: data/raw/SRR24007841.sra
+    wildcards: srr=SRR24007841
+    threads: 2
+    resources: tmpdir=/tmp, mem_mb=1000, mem_mib=954
+
+[Tue May 20 04:44:07 2025]
+Error in rule fasterq_dump:
+    jobid: 53
+    input: data/raw/SRR24007841.sra
+    output: data/raw/SRR24007841_1.fastq.gz, data/raw/SRR24007841_2.fastq.gz
+    shell:
+        
+        fasterq-dump data/raw/SRR24007841.sra \
+            --split-files \
+            --threads 2 \
+            --mem 1000000000 \
+            -O data/raw
+
+        pigz -p 2 -1 data/raw/SRR24007841_1.fastq
+        pigz -p 2 -1 data/raw/SRR24007841_2.fastq
+
+        mv data/raw/SRR24007841_1.fastq.gz data/raw/SRR24007841_1.fastq.gz
+        mv data/raw/SRR24007841_2.fastq.gz data/raw/SRR24007841_2.fastq.gz
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Removing output files of failed job fasterq_dump since they might be corrupted:
+data/raw/SRR24007841_1.fastq.gz
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: .snakemake/log/2025-05-20T044158.141505.snakemake.log

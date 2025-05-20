@@ -11,7 +11,8 @@ dependencies:
   - pigz                         # fast gzip (uses little RAM)
   - wget                         # for metadata grabs
   - jq                           # JSON parsing in bash
-  # optional, installed later
+  - entrez-direct               # esearch / efetch (for list of SRRs)
+# optional, installed later
   # - fastp
   # - metaphlan
   # - humann
