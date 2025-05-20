@@ -36,7 +36,7 @@ gut-microbiome-prjna931847/
 1. **Clone this repository**
 
    ```bash
-   git clone <your-repo-url>.git
+   git clone https://github.com/khushalsingh999267/gut-microbiome-prjna931847.git
    cd gut-microbiome-prjna931847
    ```
 
