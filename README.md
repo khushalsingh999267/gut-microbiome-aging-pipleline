@@ -1,95 +1,225 @@
-# Gut-microbiome‑PRJNA931847
+# Gut Microbiome Preprocessing Pipeline (PRJNA931847)
 
-A reproducible, beginner‑friendly Snakemake workflow to download and preprocess raw metagenomic reads for BioProject **PRJNA931847** (gut‑microbiome shotgun data). This repository documents:
-
-* Environment setup (Conda)
-* Fetching SRA run accessions
-* Downloading and converting `.sra` files to paired FASTQ (≤1 GB RAM)
-* Project structure and usage instructions
+**Author:** Khushal Singh ([github.com/ksingh999267](https://github.com/ksingh999267))
+**Version:** 0.1.0 (2025-06-16)
 
 ---
 
-## 📁 Repository Structure
+## 📖 Table of Contents
+
+1. [Project Overview](#project-overview)
+2. [Repository Structure](#repository-structure)
+3. [Prerequisites](#prerequisites)
+4. [Installation](#installation)
+5. [Data Acquisition](#data-acquisition)
+6. [Workflow Overview](#workflow-overview)
+7. [Rule Descriptions](#rule-descriptions)
+
+   * [rule all](#rule-all)
+   * [rule prefetch](#rule-prefetch)
+   * [rule fasterq\_dump](#rule-fasterq_dump)
+   * [rule compress](#rule-compress)
+8. [How to Run](#how-to-run)
+9. [Next Steps](#next-steps)
+
+---
+
+## 🧐 Project Overview
+
+This Snakemake workflow automates the download and preprocessing of raw metagenomic reads for the gut microbiome BioProject **PRJNA931847**. It is optimized to run on low-resource machines (≤4 GB RAM, 4 threads) and produces compressed paired-end FASTQ files ready for QC and downstream analysis.
+
+---
+
+## 📂 Repository Structure
 
 ```
 gut-microbiome-prjna931847/
-├── environment.yml         # Conda environment specification
-├── config.yaml             # Project parameters for Snakemake
-├── Snakefile               # Snakemake download & conversion workflow
-├── metadata/
-│   └── srr_ids.txt         # List of SRR IDs for PRJNA931847
-├── data/
-│   └── raw/                # Output: paired FASTQ files
+├── README.md                  # Project documentation
+├── environment.yml            # Conda environment specification
+├── config.yaml                # Pipeline parameters (paths, resources)
+├── Snakefile                  # Snakemake workflow definitions
 ├── scripts/
-│   └── get_srrs.sh         # Bash script to fetch SRR run list
-└── README.md               # This documentation
+│   └── get_srrs.sh            # Bash script to fetch SRR IDs
+├── metadata/
+│   └── srr_ids.txt            # List of SRR (or ERR) accessions
+├── data/
+│   ├── sra/                   # Downloaded .sra archives (not in repo)
+│   ├── fq/                    # Intermediate FASTQ files (not in repo)
+│   └── raw/                   # Final compressed FASTQ files (not in repo)
+└── .gitignore                 # Exclude data folders from Git
 ```
 
-## 🔧 Prerequisites
+---
 
-* **Git** (for version control)
-* **Miniconda** or **Anaconda** (for environment management)
-* Internet connection to fetch data from NCBI
+## ⚙️ Prerequisites
 
-## ⚙️ Setup
+* **Git** (version control)
+* **Miniconda** or **Anaconda** (environment management)
+* **Internet connection** (to fetch SRA data)
 
-1. **Clone this repository**
+---
+
+## 🔧 Installation
+
+1. **Clone the repository** (no large data pulled):
 
    ```bash
-   git clone https://github.com/khushalsingh999267/gut-microbiome-prjna931847.git
+   git clone https://github.com/ksingh999267/gut-microbiome-prjna931847.git
    cd gut-microbiome-prjna931847
    ```
 
-2. **Create and activate the Conda environment**
+2. **Create and activate the Conda environment**:
 
    ```bash
    conda env create -f environment.yml
    conda activate gut-microbiome
    ```
 
-3. **Install Snakemake (if not included)**
-   Snakemake is declared in `environment.yml`; activation should provide the `snakemake` command.
+---
 
-## 🗂️ Fetching SRR Accessions
+## 📥 Data Acquisition
 
-Generate the list of SRR run IDs for BioProject **PRJNA931847**:
+1. **Generate SRR list**:
 
-```bash
-bash scripts/get_srrs.sh
-```
+   ```bash
+   bash scripts/get_srrs.sh
+   ```
 
-* Populates `metadata/srr_ids.txt` (43 runs)
-* Easy to re-run if new samples are added
+   * Fetches run accessions for BioProject `PRJNA931847`
+   * Populates `metadata/srr_ids.txt`
 
-## 🚀 Running the Download & Conversion Workflow
+2. **Data folders** (ignored by Git via `.gitignore`):
 
-This step downloads each `.sra` file, splits into paired FASTQ, and compresses them—all within a 1 GB RAM budget.
-
-```bash
-snakemake --use-conda -j 2 --resources mem_mb=1000
-```
-
-* `-j 2`: at most two concurrent jobs
-* `--resources mem_mb=1000`: caps each rule’s RAM usage
-
-**Output:** `data/raw/SRRxxxxx_1.fastq.gz` and `SRRxxxxx_2.fastq.gz` for each run.
-
-## 📈 Next Steps
-
-1. **Quality Control & Host‑read Removal** (`fastp` + `kneaddata`)
-2. **Taxonomic Profiling** (MetaPhlAn)
-3. **Functional Profiling** (HUMAnN)
-4. **Statistical Analysis & Visualization** (R scripts)
-5. **Interactive Dashboard** (Streamlit)
-
-We will extend this pipeline step‑by‑step while maintaining reproducibility and low‑resource requirements.
-
-## 📬 Contributions & Contact
-
-Feel free to open issues or pull requests. For questions, contact:
-
-> Khushal Singh (github.com/ksingh999267)
+   ```
+   /data/sra
+   /data/fq
+   /data/raw
+   ```
 
 ---
 
-*Version*: 0.1.0 | *Date*: 2025‑05‑20
+## 🗂 Workflow Overview
+
+The pipeline comprises four main rules:
+
+1. **prefetch**: download `.sra` archives
+2. **fasterq\_dump**: convert `.sra` to paired FASTQ
+3. **compress**: gzip FASTQ into `data/raw`
+4. **all**: aggregate final targets
+
+```text
+metadata/srr_ids.txt
+        ↓
+prefetch → data/sra/{SRR}.sra
+        ↓
+fasterq_dump → data/fq/{SRR}_1.fastq + {SRR}_2.fastq
+        ↓
+compress → data/raw/{SRR}_1.fastq.gz + {SRR}_2.fastq.gz
+```
+
+---
+
+## 📝 Rule Descriptions
+
+### rule all
+
+Specifies the final files that the workflow should produce. Snakemake uses this as the default target when you run `snakemake` without arguments.
+
+```python
+rule all:
+    input:
+        expand(f"{RAW_DIR}/{{srr}}_1.fastq.gz", srr=SAMPLES),
+        expand(f"{RAW_DIR}/{{srr}}_2.fastq.gz", srr=SAMPLES)
+```
+
+* **expand(...)** generates one filepath per SRR in `SAMPLES`.
+* Ensures both mate-pair files (`_1` and `_2`) exist for every sample.
+
+---
+
+### rule prefetch
+
+Downloads SRA archives using the NCBI `prefetch` tool.
+
+```python
+rule prefetch:
+    output:
+        temp("data/sra/{srr}.sra")
+    shell:
+        "prefetch {wildcards.srr} -O data/sra"
+```
+
+* **wildcards.srr**: each SRR accession (e.g., `SRR24007843`).
+* **temp()**: marks the `.sra` file as intermediate—Snakemake may remove it after downstream rules complete.
+
+---
+
+### rule fasterq\_dump
+
+Converts `.sra` files into raw FASTQ files.
+
+```python
+rule fasterq_dump:
+    input:
+        "data/sra/{srr}.sra"
+    output:
+        temp("data/fq/{srr}_1.fastq"),
+        temp("data/fq/{srr}_2.fastq")
+    threads: THREADS
+    resources:
+        mem_mb=MEM_MB
+    shell:
+        "fasterq-dump --split-files --threads {threads} {input} -O data/fq"
+```
+
+* **--split-files**: produces two files for paired-end reads.
+* **threads** & **mem\_mb**: keep within resource caps defined in `config.yaml`.
+
+---
+
+### rule compress
+
+Gzips the FASTQ files and moves them into the final directory.
+
+```python
+rule compress:
+    input:
+        r1="data/fq/{srr}_1.fastq",
+        r2="data/fq/{srr}_2.fastq"
+    output:
+        r1=f"{RAW_DIR}/{{srr}}_1.fastq.gz",
+        r2=f"{RAW_DIR}/{{srr}}_2.fastq.gz"
+    shell:
+        "pigz -p 2 -1 {input.r1}\n"
+        "pigz -p 2 -1 {input.r2}\n"
+        "mv {input.r1}.gz {output.r1}\n"
+        "mv {input.r2}.gz {output.r2}"
+```
+
+* **pigz**: parallel gzip for speed, low memory.
+* Final files live in `data/raw/` for downstream QC/analysis.
+
+---
+
+## ▶️ How to Run
+
+```bash
+# After environment setup & SRR list generation:
+snakemake --use-conda -j 4 --resources mem_mb=4000 -p
+```
+
+* `-j 4`: up to 4 jobs concurrently
+* `--resources mem_mb=4000`: caps per-rule memory at 4 GB
+
+---
+
+## 🔮 Next Steps
+
+* **Quality Control**: integrate `fastp` or `MultiQC`
+* **Host Filtering**: add a `kneaddata` rule
+* **Profiling**: MetaPhlAn, HUMAnN, Kraken2
+* **Visualization**: R Markdown, Streamlit dashboard
+
+---
+
+*End of progress-to-date documentation.*
