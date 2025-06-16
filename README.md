@@ -64,7 +64,7 @@ gut-microbiome-prjna931847/
 1. **Clone the repository** (no large data pulled):
 
    ```bash
-   git clone https://github.com/ksingh999267/gut-microbiome-prjna931847.git
+   git clone https://github.com/ksingh999267/gut-microbiome-aging-pipleline.git
    cd gut-microbiome-prjna931847
    ```
 
