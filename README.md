@@ -1,6 +1,6 @@
 # Gut Microbiome Preprocessing Pipeline (PRJNA931847)
 
-**Author:** Khushal Singh ([github.com/ksingh999267](https://github.com/ksingh999267))
+**Author:** Khushal Singh ((https://github.com/ksingh999267))
 **Version:** 0.1.0 (2025-06-16)
 
 ---
