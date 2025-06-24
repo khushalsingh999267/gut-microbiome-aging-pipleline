@@ -1,57 +1,116 @@
-# Snakefile
-
-# 1) Tell Snakemake where to load config from
 configfile: "config.yaml"
 
-# 2) Read config parameters
-RAW    = config["raw_dir"]
-THREADS = int(config["threads"])
-MEM_MB  = int(config["mem_mb"])
+RAW_DIR   = config["raw_dir"]
+THREADS   = config["threads"]
+MEM_MB    = config["mem_mb"]
+SRR_LIST  = config["srr_list_file"]
 
-# 3) Load your SRR IDs
-with open(config["srr_list_file"]) as fh:
-    SAMPLES = [l.strip() for l in fh if l.strip()]
+with open(SRR_LIST) as f:
+    SAMPLES = [line.strip() for line in f if line.strip()]
 
-# 4) all → both R1 and R2 for every sample
+
 rule all:
     input:
-        expand("{raw}/{srr}_{pair}.fastq.gz",
-               raw=RAW,
-               srr=SAMPLES,
-               pair=[1,2])
+        # compressed FASTQs
+        expand(f"{RAW_DIR}/{{srr}}_1.fastq.gz", srr=SAMPLES),
+        expand(f"{RAW_DIR}/{{srr}}_2.fastq.gz", srr=SAMPLES),
 
-# 5) Download .sra (almost no RAM)
+        # fastp outputs (cleaned FASTQs + QC reports)
+        expand("results/fastp/{srr}_1.clean.fastq.gz", srr=SAMPLES),
+        expand("results/fastp/{srr}_2.clean.fastq.gz", srr=SAMPLES),
+        expand("results/fastp/{srr}_fastp.html",     srr=SAMPLES),
+        expand("results/fastp/{srr}_fastp.json",     srr=SAMPLES),
+
+        # final aggregated report
+        "results/multiqc/multiqc_report.html",
+        expand("results/metaphlan/{srr}_profile.txt", srr=SAMPLES)
+
+
+
 rule prefetch:
-    output: f"{RAW}/{{srr}}.sra"
-    resources:
-        mem_mb=MEM_MB
+    output:
+        temp("data/sra/{srr}/{srr}.sra")
     shell:
         """
-        prefetch --max-size 50G \
-                 --output-file {output} \
-                 {wildcards.srr}
+        prefetch {wildcards.srr} -O data/sra
         """
 
-# 6) Convert to paired FASTQ + gzip (capped at MEM_MB, THREADS)
+
 rule fasterq_dump:
-    input:  f"{RAW}/{{srr}}.sra"
+    input:
+        "data/sra/{srr}/{srr}.sra"
     output:
-        r1=f"{RAW}/{{srr}}_1.fastq.gz",
-        r2=f"{RAW}/{{srr}}_2.fastq.gz"
+        temp("data/fq/{srr}_1.fastq"),
+        temp("data/fq/{srr}_2.fastq")
     threads: THREADS
     resources:
         mem_mb=MEM_MB
     shell:
-        r"""
-        fasterq-dump {input} \
-            --split-files \
-            --threads {threads} \
-            --mem {resources.mem_mb}000000 \
-            -O {RAW}
-
-        pigz -p {threads} -1 {RAW}/{wildcards.srr}_1.fastq
-        pigz -p {threads} -1 {RAW}/{wildcards.srr}_2.fastq
-
-        mv {RAW}/{wildcards.srr}_1.fastq.gz {output.r1}
-        mv {RAW}/{wildcards.srr}_2.fastq.gz {output.r2}
         """
+        fasterq-dump --split-files --threads {threads} {input} -O data/fq
+        """
+
+
+rule compress:
+    input:
+        r1="data/fq/{srr}_1.fastq",
+        r2="data/fq/{srr}_2.fastq"
+    output:
+        r1=f"{RAW_DIR}/{{srr}}_1.fastq.gz",
+        r2=f"{RAW_DIR}/{{srr}}_2.fastq.gz"
+    shell:
+        """
+        pigz -p 2 -1 {input.r1}
+        pigz -p 2 -1 {input.r2}
+        mv {input.r1}.gz {output.r1}
+        mv {input.r2}.gz {output.r2}
+        """
+
+
+rule fastp:
+    input:
+        r1 = f"{RAW_DIR}/{{srr}}_1.fastq.gz",
+        r2 = f"{RAW_DIR}/{{srr}}_2.fastq.gz"
+    output:
+        r1   = "results/fastp/{srr}_1.clean.fastq.gz",
+        r2   = "results/fastp/{srr}_2.clean.fastq.gz",
+        html = "results/fastp/{srr}_fastp.html",
+        json = "results/fastp/{srr}_fastp.json"
+    threads: THREADS
+    shell:
+        """
+        fastp \
+            -i {input.r1} -I {input.r2} \
+            -o {output.r1} -O {output.r2} \
+            --html {output.html} --json {output.json} \
+            -w {threads}
+        """
+
+rule multiqc:
+    input:
+        # gather all per-sample fastp reports
+        expand("results/fastp/{srr}_fastp.json", srr=SAMPLES)+
+        expand("results/fastp/{srr}_fastp.html", srr=SAMPLES)
+    output:
+        html="results/multiqc/multiqc_report.html"
+    shell:
+        """multiqc results/fastp \
+            -o results/multiqc \
+            --filename multiqc_report.html \
+            --force 
+        """
+rule metaphlan:
+    input:
+        r1 = f"{RAW_DIR}/{{srr}}_1.fastq.gz",
+        r2 = f"{RAW_DIR}/{{srr}}_2.fastq.gz"
+    output:
+        "results/metaphlan/{srr}_profile.txt"
+    threads: THREADS
+    shell:
+        """
+        metaphlan {input.r1}, {input.r2} \
+        --input_type fastq \
+        --bowtie2out results/metaphlan/{wildcards.srr}_bowtie2.bz2 \
+        --nproc {threads} > {output}
+        """
+
