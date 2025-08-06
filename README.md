@@ -1,5 +1,3 @@
-````markdown
-
 # Metagenome-10× 🚀  
 *A lightning-fast Snakemake pipeline that auto-downloads any public **BioProject** and processes the **first 10 paired-end samples** end-to-end: **download → QC → taxonomic profiling → reports**.*
 
